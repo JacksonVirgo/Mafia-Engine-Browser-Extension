@@ -1,0 +1,24 @@
+{
+	"name": "Mafia Engine",
+	"description": "Browser extension to make the use of Mafia Engine forum mafia sites seamless",
+	"version": "0.1.0",
+	"manifest_version": 2,
+	"icons": {
+		"128": "./cog-128.png",
+		"512": "./cog-512.png"
+	},
+	"background": {
+		"scripts": ["./background.js"]
+	},
+	"options_page": "./options.html",
+	"browser_action": {
+		"default_popup": "./popup.html"
+	},
+	"permissions": ["tabs", "https://forum.mafiascum.net/*"],
+	"content_scripts": [
+		{
+			"matches": ["https://forum.mafiascum.net/*"],
+			"js": ["./lib/jquery-3.6.0.min.js", "./lib/socket.io.min.js", "./lib/string-similarity.js", "./js/formatting/voteCountFormatter.js", "./js/cookies.js", "./js/content.js"]
+		}
+	]
+}
