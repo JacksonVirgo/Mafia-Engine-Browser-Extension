@@ -18,7 +18,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://forum.mafiascum.net/*"],
-			"js": ["./lib/jquery-3.6.0.min.js", "./lib/socket.io.min.js", "./lib/string-similarity.js", "./js/formatting/voteCountFormatter.js", "./js/cookies.js", "./js/content.js"]
+			"js": ["./lib/jquery-3.6.0.min.js", "./lib/socket.io.min.js", "./lib/string-similarity.js", "./js/network.js", "./js/formatting/voteCountFormatter.js", "./js/cookies.js", "./js/content.js"]
 		}
 	]
 }

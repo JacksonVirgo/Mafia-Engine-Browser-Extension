@@ -1,4 +1,3 @@
-const socket = io('https://stage.mafiaengine.com');
 const global = {
 	voteCountProgress: 'Vote Counter Progress',
 };
@@ -9,7 +8,6 @@ $(() => {
 	if (isThread()) {
 		let threadVC = generateButtonThreadVC();
 		let pageNumber = $('.pagination').find('strong').first().html();
-
 		$('#topic-search').append(threadVC);
 		$('.post').each((index, value) => {
 			let root = $(value);
@@ -36,11 +34,9 @@ $(() => {
 	}
 });
 function isThread() {
-	let url = window.location.href;
 	let params = new URLSearchParams(window.location.href);
 	return params.get('t') || params.get('p');
 }
-
 const setPostVC = () => {
 	let pageNumber = $('.pagination').find('strong').first().html();
 	$('.post').each((index, value) => {
@@ -64,7 +60,7 @@ const generateButtonThreadVC = () => {
 	result.addClass('button2');
 	result.val('Vote Count');
 	result.click((e) => {
-		requestVoteCount();
+		sendVoteCount(window.location.href);
 	});
 	return result;
 };
@@ -75,9 +71,7 @@ function generateButtonPostVC(postNumber) {
 	result.addClass('button2');
 	result.val('VC From Post');
 	result.click((e) => {
-		let id = e.currentTarget.id.split('_')[1];
-		console.log(id);
-		requestVoteCount({ post: id });
+		sendVoteCount(window.location.href, { post: e.currentTarget.id.split('_')[1] });
 	});
 	return result;
 }
@@ -87,22 +81,11 @@ function generateButtonReplacement(username) {
 	result.addClass('button2');
 	result.val('Replace User');
 	result.click((e) => {
-		generateReplacement(username);
+		sendReplacement(window.location.href, { user: username });
 	});
 	return result;
 }
-function requestVoteCount(data = {}) {
-	const { post } = data;
-	$('#editor').find('h2').first().text(generateProgressString('0%'));
-	socket.emit('votecount', { url: window.location.href, post: post ? post : null });
-	$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
-}
-function generateReplacement(user) {
-	$('#editor').find('h2').first().text(generateProgressString('PENDING'));
-	socket.emit('replacement', { url: window.location.href, user });
-	setCookie('replacementUsername', user);
-	$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
-}
+
 const generateProgressString = (progress) => {
 	return `${global.voteCountProgress} - ${progress}`;
 };
@@ -134,6 +117,7 @@ socket.on('progress', (data) => {
 	}
 });
 socket.on('result', (data) => {
+	console.log(data);
 	setProgress(generateProgressString('Complete'));
 	let vc = new VoteCount(data);
 	let cleaned = vc.clean();

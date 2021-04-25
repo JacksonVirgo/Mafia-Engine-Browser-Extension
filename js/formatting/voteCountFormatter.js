@@ -266,8 +266,10 @@ class Vote {
 		this.vote.last = lastVote;
 		this.vote.valid = finalVote;
 	}
-	isValid(settings) {
+	isValid(settings, post) {
 		let isCurrent = this.number > parseInt(settings.days[settings.days.length - 1]);
+		let isNotOld = true;
+		if (post) isNotOld = this.number <= post;
 		let isDead = false;
 		for (let deadUsr of settings.dead) {
 			let deadRoot = this.rootUser(deadUsr, settings.totalnames);
@@ -276,7 +278,7 @@ class Vote {
 				isDead = true;
 			}
 		}
-		return isCurrent && !isDead;
+		return isCurrent && isNotOld && !isDead;
 	}
 	rootUser(user, totalnames) {
 		return findBestMatch(user, totalnames).bestMatch;
@@ -284,9 +286,10 @@ class Vote {
 }
 
 class VoteCount {
-	constructor({ voteCount, settings }) {
+	constructor({ voteCount, settings, post }) {
 		this.settings = defaultFunc(settings);
 		this.voteCount = voteCount;
+		this.post = post;
 	}
 	clean() {
 		const isValid = this.settings.players.length >= 1;
@@ -322,7 +325,8 @@ class VoteCount {
 							lastVote = vote.getNewest(lastVote);
 						}
 
-						let valid = validVote?.isValid(this.settings);
+						let valid = validVote?.isValid(this.settings, this.post);
+						console.log('VALID', valid);
 						if (valid && !hammerOccured) {
 							let authorIndex = voteData.notVoting.indexOf(validVote.author);
 							voteData.notVoting.splice(authorIndex, 1);
@@ -371,25 +375,25 @@ class VoteCount {
 		const { wagons, notVoting, orderedWagons, majority } = voteData;
 		const { edash, edashOnTop } = this.settings;
 		let totalVC = '';
-
 		for (const category in wagons) {
 			let categoryVotes = '[area=VC]';
-
 			const wagonArray = orderedWagons[category];
-			for (let i = 0; i < wagonArray.length; i++) {
-				for (const wagonHead in wagonArray[i]) {
-					let vote = wagonArray[i][wagonHead];
-					let voteStr = `[b]${wagonHead}[/b] (${vote.length}) -> `;
-					for (let i = 0; i < vote.length; i++) {
-						if (i > 0) voteStr += ', ';
-						voteStr += `${vote[i].author}`;
+			console.log(wagonArray);
+			if (wagonArray)
+				for (let i = 0; i < wagonArray.length; i++) {
+					for (const wagonHead in wagonArray[i]) {
+						let vote = wagonArray[i][wagonHead];
+						let voteStr = `[b]${wagonHead}[/b] (${vote.length}) -> `;
+						for (let i = 0; i < vote.length; i++) {
+							if (i > 0) voteStr += ', ';
+							voteStr += `${vote[i].author}`;
+						}
+						let eDash = majority - vote.length;
+						const showEdash = i <= edashOnTop - 1 || eDash <= edash;
+						if (showEdash) voteStr += eDash <= 0 ? ' [ELIMINATED]' : ` [E-${eDash}]`;
+						categoryVotes += `${voteStr}\n`;
 					}
-					let eDash = majority - vote.length;
-					const showEdash = i <= edashOnTop - 1 || eDash <= edash;
-					if (showEdash) voteStr += eDash <= 0 ? ' [ELIMINATED]' : ` [E-${eDash}]`;
-					categoryVotes += `${voteStr}\n`;
 				}
-			}
 			if (notVoting.length > 0) {
 				categoryVotes += `\n[b]Not Voting[/b] (${notVoting.length}) -> `;
 				for (let i = 0; i < notVoting.length; i++) {
@@ -415,6 +419,8 @@ class VoteCount {
 	}
 	checkValid(votePost, category) {
 		let isCurrent = votePost.number > parseInt(this.settings.days[this.settings.days.length - 1]);
+		let isNotOld = true;
+		if (this.post) isNotOld = votePost.number <= this.post;
 		let isDead = false;
 		for (let deadUsr of this.settings.dead) {
 			let deadRoot = this.rootUser(deadUsr);
@@ -423,7 +429,7 @@ class VoteCount {
 				isDead = true;
 			}
 		}
-		return isCurrent && !isDead;
+		return isCurrent && isNotOld && !isDead;
 	}
 	isValidVote(vote) {
 		let valid = false;
