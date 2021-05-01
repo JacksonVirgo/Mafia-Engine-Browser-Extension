@@ -29,7 +29,7 @@ $(() => {
 			let userTools = root.find('.profile-icons:last-child');
 			let postprofile = root.find('dl.postprofile');
 			let username = postprofile.first().find('dt').first().find('a').first().text();
-			if (postTools) postTools.append(generateButtonPostVC(postNumber));
+			// if (postTools) postTools.append(generateButtonPostVC(postNumber));
 			if (userTools) {
 				let dd = $('<dd>');
 				dd.append(generateButtonReplacement(username));
@@ -116,6 +116,14 @@ function getCalendarDate() {
 	currentDay = attachSuffixOf(currentDay);
 	let currentMonth = date.getMonth() + 1;
 	return `${currentDay} ${months[currentMonth - 1]}`;
+}
+function attachSuffixOf(i) {
+	let j = i % 10,
+		k = i % 100;
+	if (j === 1 && j !== 11) return i + 'st';
+	else if (j === 2 && k !== 12) return i + 'nd';
+	else if (j === 3 && k !== 13) return i + 'rd';
+	else return i + 'th';
 }
 
 socket.on('error', console.log);
