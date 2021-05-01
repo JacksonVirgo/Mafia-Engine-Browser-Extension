@@ -4,6 +4,19 @@ const global = {
 const cache = {};
 const replacementUrl = 'https://forum.mafiascum.net/viewtopic.php?f=4&t=70776';
 
+chrome.runtime.onMessage.addListener(receiveMessage);
+function receiveMessage(req, sender, res) {
+	console.log(req);
+	if (req.type === 'replacement') {
+		let data = req.data;
+		$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
+		$('textarea.inputbox').first().val(data);
+	}
+}
+function sendMessageToBackground(type, data = null) {
+	chrome.runtime.sendMessage({ type, data });
+}
+
 $(() => {
 	if (isThread()) {
 		let threadVC = generateButtonThreadVC();
@@ -23,14 +36,7 @@ $(() => {
 				postprofile.append(dd);
 			}
 		});
-		if (window.location.href === replacementUrl) {
-			let data = getCookie('replacementData');
-			if (data) {
-				$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
-				$('textarea.inputbox').first().val(data);
-				deleteCookie('replacementData');
-			}
-		}
+		if (window.location.href === replacementUrl) sendMessageToBackground('requestReplacement');
 	}
 });
 function isThread() {
@@ -53,7 +59,18 @@ const setPostVC = () => {
 		}
 	});
 };
-const setReplacement = () => {};
+const sendReplacement = (windowRef, replacementUsername) => {
+	sendMessageToBackground('replacementUsername', replacementUsername);
+	socket.emit('replacement', { url: windowRef, user: replacementUsername });
+	$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
+	$('#editor').find('h2').first().text('Generating Replacement Post...');
+};
+function sendVoteCount(url, params = {}) {
+	const { post, raw } = params;
+	socket.emit('votecount', { url, post, raw });
+	$('#editor').find('h2').first().text(generateProgressString('0%'));
+	$([document.documentElement, document.body]).animate({ scrollTop: $('#editor').offset().top }, 1000);
+}
 const generateButtonThreadVC = () => {
 	let result = $('<input>');
 	result.attr('type', 'button');
@@ -100,14 +117,6 @@ function getCalendarDate() {
 	let currentMonth = date.getMonth() + 1;
 	return `${currentDay} ${months[currentMonth - 1]}`;
 }
-function attachSuffixOf(i) {
-	let j = i % 10,
-		k = i % 100;
-	if (j === 1 && j !== 11) return i + 'st';
-	else if (j === 2 && k !== 12) return i + 'nd';
-	else if (j === 3 && k !== 13) return i + 'rd';
-	else return i + 'th';
-}
 
 socket.on('error', console.log);
 socket.on('progress', (data) => {
@@ -127,12 +136,7 @@ socket.on('result', (data) => {
 	}
 });
 socket.on('replacement', (data) => {
-	const { author, lastPage, title, url } = data;
-	let today = getCalendarDate();
-	let username = getCookie('replacementUsername');
-	deleteCookie('replacementUsername');
-	let result = `${today}\n[i][url=${url}]${title}[/url][/i]\n[b]Moderator:[/b] [user]${author}[/user][tab]3[/tab][tab]3[/tab][b]Status:[/b] ${lastPage} pages [tab]3[/tab] [b]Replacing:[/b] [user]${username}[/user]`;
-	setCookie('replacementData', result);
+	sendMessageToBackground('replacement', data);
 	window.location.href = replacementUrl;
 });
 socket.on('ping', console.log);
