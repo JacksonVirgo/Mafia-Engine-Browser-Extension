@@ -138,9 +138,12 @@ socket.on('result', (data) => {
 	setProgress(generateProgressString('Complete'));
 	let vc = new VoteCount(data);
 	let cleaned = vc.clean();
+	console.log('Cleaned', cleaned);
 	if (cleaned) {
 		const format = vc.format(cleaned);
+		console.log('Formatted', format);
 		if (format) $('textarea.inputbox').first().val(format);
+		else $('textarea.inputbox').first().val('An Error Occurred... ');
 	}
 });
 socket.on('replacement', (data) => {

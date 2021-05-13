@@ -41,6 +41,7 @@ class SettingsFormat {
 			totalnames: [],
 			moderators: [],
 			dead: [],
+			deadPost: {},
 			days: ['0'],
 			votes: {
 				reg: {
@@ -141,7 +142,9 @@ class SettingsFormat {
 				console.log(`Settings found [${sel}] as an unknown selector.`);
 			}
 		}
+		console.log('Settings', this.data);
 	}
+
 	addNamesArray(nameArray) {
 		for (let name of nameArray) {
 			if (!this.data.totalnames.includes(name)) this.data.totalnames.push(name);
@@ -272,13 +275,15 @@ class Vote {
 		if (post) isNotOld = this.number <= post;
 		let isDead = false;
 		for (let deadUsr of settings.dead) {
-			let deadRoot = this.rootUser(deadUsr, settings.totalnames);
-			let userRoot = this.rootUser(this.author, settings.totalnames);
-			if (deadRoot.target === userRoot.target) {
-				isDead = true;
-			}
+			let deadRoot = this.rootUser(deadUsr, settings.totalnames).target;
+			let userRoot = this.rootUser(this.author, settings.totalnames).target;
+			if (userRoot === deadRoot) isDead = true;
 		}
 		return isCurrent && isNotOld && !isDead;
+	}
+	isDead(deadPost, deadUser, post) {
+		let postDied = deadPost[deadUser];
+		return postDied >= post;
 	}
 	rootUser(user, totalnames) {
 		return findBestMatch(user, totalnames).bestMatch;
@@ -326,7 +331,6 @@ class VoteCount {
 						}
 
 						let valid = validVote?.isValid(this.settings, this.post);
-						console.log('VALID', valid);
 						if (valid && !hammerOccured) {
 							let authorIndex = voteData.notVoting.indexOf(validVote.author);
 							voteData.notVoting.splice(authorIndex, 1);
@@ -378,7 +382,6 @@ class VoteCount {
 		for (const category in wagons) {
 			let categoryVotes = '[area=VC]';
 			const wagonArray = orderedWagons[category];
-			console.log(wagonArray);
 			if (wagonArray)
 				for (let i = 0; i < wagonArray.length; i++) {
 					for (const wagonHead in wagonArray[i]) {
@@ -407,7 +410,7 @@ class VoteCount {
 		return totalVC;
 	}
 	getAlive() {
-		const { players, dead } = this.settings;
+		const { players, dead, deadPost } = this.settings;
 		let aliveList = [];
 		for (let i = 0; i < players.length; i++) {
 			let root = this.getRootAuthor(players[i]);
