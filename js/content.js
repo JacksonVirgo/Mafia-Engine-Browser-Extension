@@ -1,11 +1,9 @@
 const global = {
 	voteCountProgress: 'Vote Counter Progress',
 };
-const cache = {};
-function getReplacementThread(newbie = false) {
-	if (newbie) return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=72803';
-	return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=70776';
-}
+const cache = {
+	isNewbie: false,
+};
 
 chrome.runtime.onMessage.addListener(receiveMessage);
 function receiveMessage(req, sender, res) {
@@ -22,6 +20,10 @@ function sendMessageToBackground(type, data = null) {
 
 $(() => {
 	if (isThread()) {
+		$('.icon-home > a').each((index, value) => {
+			let label = $(value).html();
+			if (label === 'The Road to Rome') cache.isNewbie = true;
+		});
 		let threadVC = generateButtonThreadVC();
 		let pageNumber = $('.pagination').find('strong').first().html();
 		$('#topic-search').append(threadVC);
@@ -33,7 +35,7 @@ $(() => {
 			let postprofile = root.find('dl.postprofile');
 			let username = postprofile.first().find('dt').first().find('a').first().text();
 			// if (postTools) postTools.append(generateButtonPostVC(postNumber));
-			if (userTools) {
+			if (userTools && !cache.isNewbie) {
 				let dd = $('<dd>');
 				dd.append(generateButtonReplacement(username));
 				postprofile.append(dd);
@@ -128,6 +130,10 @@ function attachSuffixOf(i) {
 	else if (j === 3 && k !== 13) return i + 'rd';
 	else return i + 'th';
 }
+function getReplacementThread(newbie = false) {
+	if (newbie) return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=72803';
+	return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=70776';
+}
 
 socket.on('error', console.log);
 socket.on('progress', (data) => {
@@ -151,9 +157,7 @@ socket.on('result', (data) => {
 });
 socket.on('replacement', (data) => {
 	sendMessageToBackground('replacement', data);
-	let f = $('#page-header > div.navbar > div > ul.linklist.navlinks > li.icon-home > a > a:nth-child(5)');
-	if (f.text === 'The Road to Rome') console.log('Road to Rome');
-	window.location.href = getReplacementThread(false);
+	window.location.href = getReplacementThread();
 });
 socket.on('ping', console.log);
 socket.on('connection_failed', (e) => console.log('Server Unavailable'));
