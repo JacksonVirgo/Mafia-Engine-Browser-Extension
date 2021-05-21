@@ -1,11 +1,17 @@
-const global = {
-	voteCountProgress: 'Vote Counter Progress',
-};
-const cache = {
-	isNewbie: false,
-};
+const global = { voteCountProgress: 'Vote Counter Progress' },
+	cache = {
+		isNewbie: false,
+		threadURL: window.location.href,
+	};
 
 chrome.runtime.onMessage.addListener(receiveMessage);
+
+/**
+ * Handle messages sent from the background processes.
+ * @param {*} req
+ * @param {*} sender
+ * @param {*} res
+ */
 function receiveMessage(req, sender, res) {
 	console.log(req);
 	if (req.type === 'replacement') {
@@ -14,11 +20,49 @@ function receiveMessage(req, sender, res) {
 		$('textarea.inputbox').first().val(data);
 	}
 }
+
+/**
+ * Sends data from the content scripts to the background scripts.
+ * @param {*} type Type of data that's being sent
+ * @param {*} data Data which the background processes need to perform an action.
+ */
 function sendMessageToBackground(type, data = null) {
 	chrome.runtime.sendMessage({ type, data });
 }
 
+/**
+ * Check if a specific URL is a valid thread or not
+ * @returns Boolean
+ */
+function isThread() {
+	let params = new URLSearchParams(cache.threadURL);
+	return params.get('t') || params.get('p');
+}
+
+function getAbsoluteURL(base, relative) {
+	if (!base && !relative) {
+		return null;
+	}
+	var stack = base.split('/'),
+		parts = relative.split('/');
+	stack.pop(); // remove current file name (or empty string)
+	// (omit if "base" is the current folder without trailing slash)
+	for (var i = 0; i < parts.length; i++) {
+		if (parts[i] == '.') continue;
+		if (parts[i] == '..') stack.pop();
+		else stack.push(parts[i]);
+	}
+	return stack.join('/');
+}
+
 $(() => {
+	try {
+		cache.threadURL = `https://forum.mafiascum.net/${$('#page-body > h2 > a').first().attr('href').substring(2)}`;
+		console.log('[Mafia Engine] Page is a Game Thread');
+	} catch (err) {
+		console.log('[Mafia Engine] Page is not a Game Thread');
+		cache.threadURL = null;
+	}
 	if (isThread()) {
 		$('.icon-home > a').each((index, value) => {
 			let label = $(value).html();
@@ -41,13 +85,10 @@ $(() => {
 				postprofile.append(dd);
 			}
 		});
-		if (window.location.href === getReplacementThread(false) || window.location.href === getReplacementThread(true)) sendMessageToBackground('requestReplacement');
+		if (cache.threadURL === getReplacementThread(false) || cache.threadURL === getReplacementThread(true)) sendMessageToBackground('requestReplacement');
 	}
 });
-function isThread() {
-	let params = new URLSearchParams(window.location.href);
-	return params.get('t') || params.get('p');
-}
+
 const setPostVC = () => {
 	let pageNumber = $('.pagination').find('strong').first().html();
 	$('.post').each((index, value) => {
@@ -82,7 +123,7 @@ const generateButtonThreadVC = () => {
 	result.addClass('button2');
 	result.val('Vote Count');
 	result.click((e) => {
-		sendVoteCount(window.location.href);
+		sendVoteCount(cache.threadURL);
 	});
 	return result;
 };
@@ -93,7 +134,7 @@ function generateButtonPostVC(postNumber) {
 	result.addClass('button2');
 	result.val('VC From Post');
 	result.click((e) => {
-		sendVoteCount(window.location.href, { post: e.currentTarget.id.split('_')[1] });
+		sendVoteCount(cache.threadURL, { post: e.currentTarget.id.split('_')[1] });
 	});
 	return result;
 }
@@ -103,7 +144,7 @@ function generateButtonReplacement(username) {
 	result.addClass('button2');
 	result.val('Replace User');
 	result.click((e) => {
-		sendReplacement(window.location.href, { user: username });
+		sendReplacement(cache.threadURL, { user: username });
 	});
 	return result;
 }
@@ -157,7 +198,7 @@ socket.on('result', (data) => {
 });
 socket.on('replacement', (data) => {
 	sendMessageToBackground('replacement', data);
-	window.location.href = getReplacementThread();
+	cache.threadURL = getReplacementThread();
 });
 socket.on('ping', console.log);
 socket.on('connection_failed', (e) => console.log('Server Unavailable'));
