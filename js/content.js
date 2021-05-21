@@ -2,7 +2,10 @@ const global = {
 	voteCountProgress: 'Vote Counter Progress',
 };
 const cache = {};
-const replacementUrl = 'https://forum.mafiascum.net/viewtopic.php?f=4&t=70776';
+function getReplacementThread(newbie = false) {
+	if (newbie) return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=72803';
+	return 'https://forum.mafiascum.net/viewtopic.php?f=4&t=70776';
+}
 
 chrome.runtime.onMessage.addListener(receiveMessage);
 function receiveMessage(req, sender, res) {
@@ -36,7 +39,7 @@ $(() => {
 				postprofile.append(dd);
 			}
 		});
-		if (window.location.href === replacementUrl) sendMessageToBackground('requestReplacement');
+		if (window.location.href === getReplacementThread(false) || window.location.href === getReplacementThread(true)) sendMessageToBackground('requestReplacement');
 	}
 });
 function isThread() {
@@ -148,7 +151,9 @@ socket.on('result', (data) => {
 });
 socket.on('replacement', (data) => {
 	sendMessageToBackground('replacement', data);
-	window.location.href = replacementUrl;
+	let f = $('#page-header > div.navbar > div > ul.linklist.navlinks > li.icon-home > a > a:nth-child(5)');
+	if (f.text === 'The Road to Rome') console.log('Road to Rome');
+	window.location.href = getReplacementThread(false);
 });
 socket.on('ping', console.log);
 socket.on('connection_failed', (e) => console.log('Server Unavailable'));

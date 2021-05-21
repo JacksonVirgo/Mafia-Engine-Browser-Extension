@@ -404,7 +404,10 @@ class VoteCount {
 					categoryVotes += `${notVoting[i]}`;
 				}
 			}
-			categoryVotes += `${this.settings.deadline ? `\nDay ends in [countdown]${this.settings.deadline}[/countdown]` : ''}[/area]`;
+			categoryVotes += '\n';
+			if (this.getAlive() && majority) categoryVotes += `With ${this.getAlive().length} players alive it takes ${majority} to hammer\n`;
+			categoryVotes += `${this.settings.deadline ? `Day ends in [countdown]${this.settings.deadline}[/countdown]` : ''}\n`;
+			categoryVotes += `[/area]`;
 			totalVC += categoryVotes;
 		}
 		return totalVC;
