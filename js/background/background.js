@@ -8,12 +8,13 @@ function sendMessageToContent(tab, content) {
 }
 chrome.runtime.onMessage.addListener(onMessage);
 function onMessage(req, sender, res) {
+	console.log('Message Request', req, sender);
 	switch (req.type) {
 		case 'replacement':
 			if (cache.replacementUsername) {
 				const { author, lastPage, title, url } = req.data;
 				let today = getCalendarDate();
-				let result = `${today}\n[i][url=${url}]${title}[/url][/i]\n[b]Moderator:[/b] [user]${author}[/user][tab]3[/tab][tab]3[/tab][b]Status:[/b] ${lastPage} pages [tab]3[/tab] [b]Replacing:[/b] [user]${cache.replacementUsername}[/user]`;
+				let result = `${today} - [i][url=${url}]${title}[/url][/i]\n[b]Moderator:[/b] [user]${author}[/user][tab]3[/tab][tab]3[/tab][b]Status:[/b] ${lastPage} pages [tab]3[/tab] [b]Replacing:[/b] [user]${cache.replacementUsername}[/user]`;
 				cache.replacement = result;
 			} else console.log('Did Not Have Stored Username');
 			break;

@@ -270,17 +270,20 @@ class Vote {
 		this.vote.valid = finalVote;
 	}
 	isValid(settings, post) {
-		let isCurrent = this.number > parseInt(settings.days[settings.days.length - 1]);
-		let isNotOld = true;
-		if (post) isNotOld = this.number <= post;
+		const isCurrent = this.number > parseInt(settings.days[settings.days.length - 1]);
+		const isOld = post ? !(this.number <= post) : false;
+		const isModerator = settings.moderators.includes(this.author) || settings.moderators.includes(this.rootUser(this.author, settings.totalnames));
+		const isPlayer = settings.totalnames.includes(this.author);
 		let isDead = false;
 		for (let deadUsr of settings.dead) {
 			let deadRoot = this.rootUser(deadUsr, settings.totalnames).target;
 			let userRoot = this.rootUser(this.author, settings.totalnames).target;
 			if (userRoot === deadRoot) isDead = true;
 		}
-		return isCurrent && isNotOld && !isDead;
+		const validity = isCurrent && !isOld && !isDead && !isModerator && isPlayer;
+		return validity;
 	}
+
 	isDead(deadPost, deadUser, post) {
 		let postDied = deadPost[deadUser];
 		return postDied >= post;
@@ -302,6 +305,7 @@ class VoteCount {
 			votes: {},
 			wagons: {},
 			orderedWagons: [],
+			allPlayers: [],
 			notVoting: [],
 			majority: null,
 		};
@@ -310,6 +314,7 @@ class VoteCount {
 				if (!voteData.votes[category]) voteData.votes[category] = {};
 				if (!voteData.wagons[category]) voteData.wagons[category] = {};
 				let hammerOccured = false;
+				voteData.allPlayers = this.getAlive();
 				voteData.notVoting = this.getAlive();
 				voteData.majority = Math.ceil(voteData.notVoting.length / 2);
 				for (const author in this.voteCount[category]) {
@@ -358,6 +363,7 @@ class VoteCount {
 			}
 		}
 		let returnVal = this.settings.players.length;
+		console.log(voteData);
 		return returnVal >= 1 ? voteData : null;
 	}
 	sortWagonByPostNumber(wagon) {
@@ -372,7 +378,6 @@ class VoteCount {
 				}
 			}
 		}
-		console.log(newArray);
 		return newArray;
 	}
 	format(voteData) {
@@ -424,9 +429,9 @@ class VoteCount {
 		return aliveList;
 	}
 	checkValid(votePost, category) {
-		let isCurrent = votePost.number > parseInt(this.settings.days[this.settings.days.length - 1]);
-		let isNotOld = true;
-		if (this.post) isNotOld = votePost.number <= this.post;
+		const isCurrent = votePost.number > parseInt(this.settings.days[this.settings.days.length - 1]);
+		const isOld = this.post ? !(votePost.number <= this.post) : false;
+		const isModerator = this.settings.moderators.includes(votePost.author);
 		let isDead = false;
 		for (let deadUsr of this.settings.dead) {
 			let deadRoot = this.rootUser(deadUsr);
@@ -435,7 +440,7 @@ class VoteCount {
 				isDead = true;
 			}
 		}
-		return isCurrent && isNotOld && !isDead;
+		return isCurrent && !isOld && !isDead && !isModerator;
 	}
 	isValidVote(vote) {
 		let valid = false;

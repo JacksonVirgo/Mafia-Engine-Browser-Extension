@@ -199,6 +199,7 @@ socket.on('result', (data) => {
 socket.on('replacement', (data) => {
 	sendMessageToBackground('replacement', data);
 	cache.threadURL = getReplacementThread();
+	location.href = cache.threadURL;
 });
 socket.on('ping', console.log);
 socket.on('connection_failed', (e) => console.log('Server Unavailable'));
